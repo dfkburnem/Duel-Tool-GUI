@@ -15,7 +15,7 @@ This project provides a GUI for automating duels in DeFi Kingdoms. It allows use
 
 ## Important Notes
 
-- **Config and ABI Files**: Ensure that the `duel_config.json` and `duel_abi.json` files are located in the same directory from which the script or executable is run.
+- **Reference Files**: Ensure that the `duel_config.json`, `duel_abi.json` and .key files are located in the same directory from which the script or executable is run.
 - **Executable vs Script**: While the executable provides an easier way to run the application, it is not as trustless as running the script directly from the source code. If security and transparency are priorities, consider using the script.
 
 ## Tip Address
