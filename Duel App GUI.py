@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import threading
 import time
@@ -24,7 +25,7 @@ STAT_MAPPING = {'strength': 0, 'agility': 2, 'intelligence': 4, 'wisdom': 6, 'lu
 # Utility functions
 def load_abi(file_name, logger):
     try:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
+        script_dir = os.getcwd()
         abi_file_path = os.path.join(script_dir, file_name)
         with open(abi_file_path, 'r') as abi_file:
             return json.load(abi_file)
@@ -202,7 +203,7 @@ class DuelApp:
 
         self.configure_styles()
         self.create_layout()
-        self.load_config()
+        self.load_config(self.CONFIG_FILE)
         self.apply_config()
         self.create_input_frame()
         self.create_output_frame()
@@ -544,7 +545,7 @@ class DuelApp:
         hero_ids = [entry.get() for _, entry in self.hero_id_fields]
         password = self.password_entry.get()
 
-        script_dir = os.path.dirname(os.path.abspath(__file__))
+        script_dir = os.getcwd()  # Use current working directory
         time.sleep(0.3)
 
         key_file_name = [f for f in os.listdir(script_dir) if f.endswith('.key')]
@@ -819,22 +820,32 @@ class DuelApp:
         }
 
         try:
-            with open(self.CONFIG_FILE, 'w') as config_file:
+            script_dir = os.getcwd()  # Use current working directory
+            config_file_path = os.path.join(script_dir, self.CONFIG_FILE)
+            with open(config_file_path, 'w') as config_file:
                 json.dump(config, config_file)
         except Exception as e:
             self.async_log_to_ui(f"Error saving configuration: {e}")
 
-    def load_config(self):
-        if os.path.exists(self.CONFIG_FILE):
-            try:
-                with open(self.CONFIG_FILE, 'r') as config_file:
-                    config = json.load(config_file)
-                    self.duel_settings = config.get('duel_settings', {})
-                    self.apply_config()
-            except Exception as e:
-                self.async_log_to_ui(f"Error loading configuration: {e}")
+    @staticmethod
+    def load_config(file_name):
+        try:
+            script_dir = os.getcwd()  # Use current working directory
+            config_file_path = os.path.join(script_dir, file_name)
+            if not os.path.exists(config_file_path) or os.path.getsize(config_file_path) == 0:
+                print(f"Configuration file '{config_file_path}' does not exist or is empty. Using default configuration.")
+                return {}
+            
+            with open(config_file_path, 'r') as config_file:
+                return json.load(config_file)
+        except (IOError, json.JSONDecodeError) as e:
+            print(f"Error loading configuration: {e}")
+            return {}
 
     def apply_config(self):
+        config = self.load_config(self.CONFIG_FILE)
+        self.duel_settings = config.get('duel_settings', {})
+        
         selected_duel_type = self.get_selected_duel_type()
         if str(selected_duel_type) in self.duel_settings:
             settings = self.duel_settings[str(selected_duel_type)]
@@ -872,6 +883,7 @@ class DuelApp:
                     entry.grid(row=i, column=1, sticky="ew", padx=5, pady=5)
                     entry.insert(0, hero_id)
                     self.hero_id_fields.append((label, entry))
+
 
     def update_class_bonuses(self):
         try:

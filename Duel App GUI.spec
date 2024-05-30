@@ -8,7 +8,7 @@ a = Analysis(
     ['Duel App GUI.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('duel_abi.json', '.'), ('duel_config.json', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
