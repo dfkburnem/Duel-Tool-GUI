@@ -25,6 +25,7 @@ venv/
 *.log
 *.tmp
 
-# Ignore PyInstaller build directories and files
+# Ignore build artifacts
+*.tar.gz
 build/
 dist/

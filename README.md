@@ -2,6 +2,31 @@
 
 This project provides a GUI for automating duels in DeFi Kingdoms. It allows users to configure duel settings which are saved for each duel type, enabling a user-friendly experience for repeated tasks. Additionally, the tool allows users to specify a duel limit for each session and can facilitate challenging the champion by optimizing queueing for the minimum win streak.
 
+## Installation
+
+You can install the package directly from the releases.
+
+### Source Code
+
+1. To install the package, run:
+
+```bash
+pip install https://github.com/dfkburnem/Duel-Tool-GUI/releases/download/v1.0.1/duel_app_gui-1.0.1.tar.gz
+```
+2. Run script using:
+
+```bash
+duel_app_gui
+```
+
+### Executable
+
+Download the executable from the releases page and run it directly:
+
+1. Go to the [releases page](https://github.com/dfkburnem/Duel-Tool-GUI/releases).
+2. Download the executable file (Duel App GUI.exe).
+3. Run the executable.
+
 ## Usage
 
 1. **Select Duel Type**: Choose the type of duel you want to participate in (solo, squad, pack, warr).
