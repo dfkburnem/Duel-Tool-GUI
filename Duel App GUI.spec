@@ -5,10 +5,10 @@ block_cipher = None
 
 
 a = Analysis(
-    ['Duel App GUI.py'],
+    ['duel_app_gui.py'],
     pathex=[],
     binaries=[],
-    datas=[('duel_abi.json', '.'), ('duel_config.json', '.')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -28,7 +28,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='Duel App GUI',
+    name='duel_app_gui',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

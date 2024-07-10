@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='duel_app_gui',
-    version='1.0.1',  
+    version='2.0.0',  
     packages=find_packages(),  
     py_modules=['duel_app_gui'],
     install_requires=[
