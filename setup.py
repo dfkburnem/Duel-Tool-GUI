@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 
 setup(
     name='duel_app_gui',
-    version='2.0.0',  
+    version='3.0.0',  
     packages=find_packages(),  
     py_modules=['duel_app_gui'],
     install_requires=[
-        'cryptography>=40.0.2',
-        'web3>=6.4.0',
+        'cryptography>=43.0.1',
+        'web3>=7.2.0',
     ],
     entry_points={
         'console_scripts': [

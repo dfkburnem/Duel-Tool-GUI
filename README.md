@@ -1,6 +1,6 @@
 # Duel Tool GUI
 
-This project provides a GUI for automating duels in DeFi Kingdoms. It allows users to configure duel settings which are saved and queue up multiple teams for dueling, automating matchmaking, entering duel lobby and complete duels transactions. Additionally, the tool allows users to specify a duel limit for each session and can facilitate challenging the champion by optimizing queueing for the minimum win streak.
+This project provides a GUI for automating duels in DeFi Kingdoms. It allows users to configure duel settings which are saved and queue up multiple teams for dueling, automating matchmaking, entering duel lobby and complete duels transactions. The tool allows users to specify a duel limit for each session and can facilitate challenging the champion by optimizing queueing for the minimum win streak. Once duel limit is reached, the currently selected team may be recharged to reset the duel limit and all rank rewards for a given realm may be collected using a single button.
 
 ## Installation
 
@@ -11,7 +11,7 @@ You can install the package directly from the releases.
 1. To install the package, run:
 
 ```bash
-pip install https://github.com/dfkburnem/Duel-Tool-GUI/releases/download/v2.0.0/duel_app_gui-2.0.0.tar.gz
+pip install https://github.com/dfkburnem/Duel-Tool-GUI/releases/download/v3.0.0/duel_app_gui-3.0.0.tar.gz
 ```
 2. Run script using:
 
@@ -39,17 +39,19 @@ Download the executable from the releases page and run it directly:
 8. **Enter Password**: Provide the password to decrypt your private key.
 9. **Add to Queue**: Click the appropriate button to add selected team to the queue.
 10. **Start Queue**: Start the dueling process for listed teams.
+11. **Recharge Team**: Recharge currently selected to continue dueling once duel limit is reached.
+12. **Claim Rank Rewards**: Claim duel rewards for selected realm based on current rank.
 
 ## Important Notes
 
-- **Reference Files**: Ensure that the `duel_config.json`, `duel_abi.json` and .key files are located in the same directory from which the script or executable is run.
+- **Reference Files**: Ensure that the `duel_config.json`, `duel_abi.json`, `duel_rank_abi.json` and .key files are located in the same directory from which the script or executable is run.
 - **Executable vs Script**: While the executable provides an easier way to run the application, it is not as trustless as running the script directly from the source code. If security and transparency are priorities, consider using the script.
 
 ## Tip Address
 
 If you find this tool useful and would like to provide a tip/gift for my efforts, you can send it to the following address:
 
-**Tip Address:** 0xF3b3b68B554817185A01576E775dB4466E42F126
+**Tip Address:** 0xF41E9AD33C0add5DB83eD6316E5B719123046187
 
 ## License
 

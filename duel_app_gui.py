@@ -16,6 +16,10 @@ from cryptography.fernet import Fernet
 # Constants
 SERENDALE_CONTRACT_ADDRESS = "0x453b8D7fe1dbdA3496917055B7FB154432D83d76"
 CRYSTALVALE_CONTRACT_ADDRESS = "0x4297531f246C5DaF65726F44889B960FaEf81ECE"
+
+SERENDALE_CLAIM_CONTRACT_ADDRESS = "0xb0f423BCB1F4396781e21ad9E0BC151d29Ac020C"
+CRYSTALVALE_CLAIM_CONTRACT_ADDRESS = "0x89789a580fdE00319493BdCdB6C65959DAB1e517"
+
 GAS_LIMITS = {
     "CV": 24000000,  # 24 million gas limit for Crystalvale
     "SD": 15000000,  # 15 million gas limit for Serendale
@@ -167,7 +171,7 @@ class DuelContract:
             signed_tx = self.w3.eth.account.sign_transaction(
                 tx, private_key=private_key
             )
-            ret = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+            ret = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
             self.logger("Transaction successfully sent!")
             tx_receipt = self.w3.eth.wait_for_transaction_receipt(
                 transaction_hash=signed_tx.hash,
@@ -397,6 +401,9 @@ class DuelApp:
         self.duel_contract = None
 
         abi = load_abi("duel_abi.json", self.async_log_to_ui)
+        # Load the ABI for rank claim contract
+        self.rank_abi = load_abi("duel_rank_abi.json", self.async_log_to_ui)
+
         if abi:
             rpc_server = "https://subnets.avax.network/defi-kingdoms/dfk-chain/rpc"  # Using one of the RPC addresses
             duel_contract_address = CRYSTALVALE_CONTRACT_ADDRESS
@@ -405,6 +412,11 @@ class DuelApp:
             )
             if self.duel_contract.contract:
                 self.update_class_bonuses()
+
+    # Instantiate the rank claim contract based on the selected realm
+    def load_claim_contract(self, realm):
+        claim_contract_address = SERENDALE_CLAIM_CONTRACT_ADDRESS if realm == "SD" else CRYSTALVALE_CLAIM_CONTRACT_ADDRESS
+        return get_contract(self.duel_contract.w3, claim_contract_address, self.rank_abi)
 
     def create_gas_settings(self, master):
         ttk.Label(master, text="Max Gas").grid(row=24, column=0, sticky="w")
@@ -464,37 +476,69 @@ class DuelApp:
         self.log_output.tag_config("legendary", foreground="orange")
         self.log_output.tag_config("mythic", foreground="purple")
 
-    def get_rank_and_tag(self, rank):
-        if rank < 30:
-            return "Common I", "common"
-        elif rank < 90:
-            return "Common II", "common"
-        elif rank < 150:
-            return "Common III", "common"
-        elif rank < 300:
-            return "Uncommon I", "uncommon"
-        elif rank < 500:
-            return "Uncommon II", "uncommon"
-        elif rank < 750:
-            return "Uncommon III", "uncommon"
-        elif rank < 1250:
-            return "Rare I", "rare"
-        elif rank < 2000:
-            return "Rare II", "rare"
-        elif rank < 3000:
-            return "Rare III", "rare"
-        elif rank < 4500:
-            return "Legendary I", "legendary"
-        elif rank < 7000:
-            return "Legendary II", "legendary"
-        elif rank < 11000:
-            return "Legendary III", "legendary"
-        elif rank < 16000:
-            return "Mythic I", "mythic"
-        elif rank < 22000:
-            return "Mythic II", "mythic"
+    def get_rank_and_tag(self, score):
+        if score < 30:
+            return 1, "Common I", "common"
+        elif score < 90:
+            return 2, "Common II", "common"
+        elif score < 150:
+            return 3, "Common III", "common"
+        elif score < 300:
+            return 4, "Uncommon I", "uncommon"
+        elif score < 500:
+            return 5, "Uncommon II", "uncommon"
+        elif score < 750:
+            return 6, "Uncommon III", "uncommon"
+        elif score < 1250:
+            return 7, "Rare I", "rare"
+        elif score < 2000:
+            return 8, "Rare II", "rare"
+        elif score < 3000:
+            return 9, "Rare III", "rare"
+        elif score < 4500:
+            return 10, "Legendary I", "legendary"
+        elif score < 7000:
+            return 11, "Legendary II", "legendary"
+        elif score < 11000:
+            return 12, "Legendary III", "legendary"
+        elif score < 16000:
+            return 13, "Mythic I", "mythic"
+        elif score < 22000:
+            return 14, "Mythic II", "mythic"
         else:
-            return "Mythic III", "mythic"
+            return 15, "Mythic III", "mythic"
+
+    def get_rank_name_from_rank_number(self, rank):
+        if rank == 1:
+            return "Common I"
+        elif rank == 2:
+            return "Common II"
+        elif rank == 3:
+            return "Common III"
+        elif rank == 4:
+            return "Uncommon I"
+        elif rank == 5:
+            return "Uncommon II"
+        elif rank == 6:
+            return "Uncommon III"
+        elif rank == 7:
+            return "Rare I"
+        elif rank == 8:
+            return "Rare II"
+        elif rank == 9:
+            return "Rare III"
+        elif rank == 10:
+            return "Legendary I"
+        elif rank == 11:
+            return "Legendary II"
+        elif rank == 12:
+            return "Legendary III"
+        elif rank == 13:
+            return "Mythic I"
+        elif rank == 14:
+            return "Mythic II"
+        elif rank == 15:
+            return "Mythic III"
 
     def create_layout(self):
         self.container = ttk.Frame(self.master, style="TFrame")
@@ -735,6 +779,21 @@ class DuelApp:
                 self.entry_fee_buttons[duel_type].append(btn)
             button_frame.grid_remove()
 
+        # Recharge Team Button added to the right of entry fees
+        self.recharge_team_btn = tk.Button(
+            self.entry_fee_frame,
+            text="Recharge Team",
+            bg="green",
+            fg="white",
+            highlightbackground="white",
+            highlightcolor="white",
+            highlightthickness=2,
+            bd=5,
+            command=self.recharge_team
+        )
+        self.recharge_team_btn.grid(row=1, column=4, padx=10, pady=10, sticky="ew")
+        self.recharge_team_btn.grid_remove()
+
     def init_realm_selection(self, master):
         self.realm_buttons_frame = ttk.Frame(master)
         self.realm_buttons_frame.grid(row=23, column=0, columnspan=4, sticky="ew")
@@ -776,7 +835,7 @@ class DuelApp:
                 rpc_server = "https://subnets.avax.network/defi-kingdoms/dfk-chain/rpc"
             else:
                 duel_contract_address = SERENDALE_CONTRACT_ADDRESS
-                rpc_server = "https://klaytn.rpc.defikingdoms.com/"
+                rpc_server = "https://kaia.rpc.defikingdoms.com"
 
             abi = load_abi("duel_abi.json", self.async_log_to_ui)
             if abi:
@@ -825,6 +884,9 @@ class DuelApp:
             button_frame = self.entry_fee_buttons[duel_type_str][0].master
             button_frame.grid()
             self.entry_fee_label.grid()
+
+        # Show the Recharge Team button
+        self.recharge_team_btn.grid()
 
         self.realm_buttons_frame.grid()
 
@@ -997,6 +1059,19 @@ class DuelApp:
             command=self.undo_last_team,
         )
         self.undo_btn.grid(row=0, column=2, padx=10, pady=10, sticky="ew")
+
+        self.claim_rewards_btn = tk.Button(
+            master,
+            text="Claim Rank Rewards",
+            bg="blue",
+            fg="white",
+            highlightbackground="white",
+            highlightcolor="white",
+            highlightthickness=2,
+            bd=5,
+            command=self.claim_rank_rewards
+        )
+        self.claim_rewards_btn.grid(row=32, column=3, padx=10, pady=10, sticky="ew")
 
     def get_selected_duel_type(self):
         return self.duel_type_selection.get()
@@ -1387,7 +1462,7 @@ class DuelApp:
                     player_score = self.duel_contract.get_player_score(
                         account_address, duel_type_number
                     )
-                    rank_name, rank_tag = self.get_rank_and_tag(player_score)
+                    _, rank_name, rank_tag = self.get_rank_and_tag(player_score)
                     self.log_to_ui(f"Current Rank: {player_score} ", None)
                     self.log_to_ui(f"{rank_name}", rank_tag)
 
@@ -1721,12 +1796,163 @@ class DuelApp:
         except Exception as e:
             self.async_log_to_ui(f"Failed to get class bonuses: {str(e)}")
 
+    def recharge_team(self):
+        threading.Thread(target=self.recharge_team_process).start()
+
+    def recharge_team_process(self):
+        try:
+            if not self.private_key:
+                password = self.password_entry.get()
+                script_dir = os.getcwd()
+                key_file_name = [f for f in os.listdir(script_dir) if f.endswith(".key")]
+                if key_file_name:
+                    key_file_name = key_file_name[0]
+                    self.private_key = self.decrypt_key(os.path.join(script_dir, key_file_name), password)
+
+                    if not self.private_key:
+                        messagebox.showerror("Decryption Error", "Failed to decrypt the private key.")
+                        return
+                else:
+                    messagebox.showerror("Key File Error", "No .key file found in the script directory.")
+                    return
+
+            team_size = self.duel_type_selection.get()
+
+            hero_ids = [int(entry.get()) for _, entry in self.hero_id_fields if entry.get().isdigit()]
+
+            if not hero_ids:
+                messagebox.showerror("Input Error", "Please enter valid Hero IDs.")
+                return
+
+            if not self.current_realm:
+                messagebox.showerror("Input Error", "Realm not selected. Please select a realm.")
+                return
+
+            gas_limit = GAS_LIMITS.get(self.current_realm)
+            if not gas_limit:
+                messagebox.showerror("Input Error", "Invalid gas limit configuration.")
+                return
+
+            max_fee_per_gas = int(self.max_fee_per_gas_entry.get())
+            priority_fee_per_gas = int(self.priority_fee_per_gas_entry.get())
+            gas_price = {
+                "maxFeePerGas": max_fee_per_gas,
+                "maxPriorityFeePerGas": priority_fee_per_gas,
+            }
+
+            w3 = self.duel_contract.w3
+            account_address = w3.eth.account.from_key(self.private_key).address
+            nonce = w3.eth.get_transaction_count(account_address)
+
+            tx = self.duel_contract.contract.functions.rechargeEntriesMulti(
+                team_size, hero_ids
+            ).build_transaction({
+                "nonce": nonce,
+                "gas": gas_limit,
+                "gasPrice": w3.to_wei(gas_price["maxFeePerGas"], "gwei"),
+            })
+
+            tx_receipt = self.duel_contract.send_transaction(tx, self.private_key, 60)
+            time.sleep(1)
+            if tx_receipt:
+                self.async_log_to_ui(f"Recharged team successfully.")
+            else:
+                self.async_log_to_ui(f"Failed to recharge team.")
+
+        except Exception as e:
+            self.async_log_to_ui(f"Error recharging team: {e}")
+
+    def claim_rank_rewards(self):
+        threading.Thread(target=self._claim_rank_rewards_process).start()
+
+    def _claim_rank_rewards_process(self):
+        try:
+            if not self.private_key:
+                password = self.password_entry.get()
+                script_dir = os.getcwd()
+                key_file_name = [f for f in os.listdir(script_dir) if f.endswith(".key")]
+                if key_file_name:
+                    key_file_name = key_file_name[0]
+                    self.private_key = self.decrypt_key(os.path.join(script_dir, key_file_name), password)
+
+                    if not self.private_key:
+                        messagebox.showerror("Decryption Error", "Failed to decrypt the private key.")
+                        return
+                else:
+                    messagebox.showerror("Key File Error", "No .key file found in the script directory.")
+                    return
+
+            if not self.current_realm:
+                messagebox.showerror("Realm Selection Error", "Please select a realm before claiming rewards.")
+                return
+
+            w3 = self.duel_contract.w3
+            account_address = w3.eth.account.from_key(self.private_key).address
+
+            claim_contract = self.load_claim_contract(self.current_realm)
+
+            max_fee_per_gas = int(self.max_fee_per_gas_entry.get())
+            priority_fee_per_gas = int(self.priority_fee_per_gas_entry.get())
+
+            gas_price = {
+                "maxFeePerGas": max_fee_per_gas,
+                "maxPriorityFeePerGas": priority_fee_per_gas
+            }
+
+            duel_type_names = {v: k for k, v in TYPE_MAPPING.items()}
+
+            duel_types = [1, 3, 5, 9]
+            current_season = 9
+
+            for duel_type in duel_types:
+                player_score = self.duel_contract.get_player_score(account_address, duel_type)
+                duel_type_name = duel_type_names.get(duel_type, f"Type {duel_type}")
+
+                if player_score == 0:
+                    self.async_log_to_ui(f"No rewards to claim for {duel_type_name} as score is 0.")
+                    continue
+
+                rank, rank_name, _ = self.get_rank_and_tag(player_score)
+
+                self.async_log_to_ui(f"Player rank for {duel_type_name}: {rank_name}")
+
+                claimed_ranks = claim_contract.functions.getClaimedRanks(current_season, duel_type, account_address).call()
+
+                unclaimed_ranks = [i + 1 for i in range(len(claimed_ranks)) if claimed_ranks[i] == 0]
+
+                if unclaimed_ranks:
+                    for r in unclaimed_ranks:
+                        rank_name = self.get_rank_name_from_rank_number(r)
+                        if r<= rank:
+                            nonce = w3.eth.get_transaction_count(account_address)
+
+                            tx = claim_contract.functions.claimReward(current_season, duel_type, r).build_transaction({
+                                "nonce": nonce,
+                                "gas": 15000000,
+                                "maxFeePerGas": w3.to_wei(gas_price["maxFeePerGas"], "gwei"),
+                                "maxPriorityFeePerGas": w3.to_wei(gas_price["maxPriorityFeePerGas"], "gwei"),
+                            })
+
+                            tx_receipt = self.duel_contract.send_transaction(tx, self.private_key, 60)
+                      
+                            if tx_receipt:
+                                self.async_log_to_ui(f"Successfully claimed reward for {rank_name} in {duel_type_name}.")
+                            else:
+                                self.async_log_to_ui(f"Failed to claim reward for {rank_name} in {duel_type_name}.")
+                        else:
+                            self.async_log_to_ui(f"Insufficient rank for {rank_name}.")
+                            break
+
+                else:
+                    self.async_log_to_ui(f"All rewards already claimed for {duel_type_name}.")
+
+        except Exception as e:
+            self.async_log_to_ui(f"Error claiming rank rewards: {e}")
 
 def main():
     root = tk.Tk()
     app = DuelApp(root)
     root.mainloop()
-
 
 if __name__ == "__main__":
     main()

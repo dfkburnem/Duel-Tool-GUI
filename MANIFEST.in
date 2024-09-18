@@ -2,3 +2,4 @@ include README.md
 include LICENSE
 include duel_config.json
 include duel_abi.json
+include duel_rank_abi.json
